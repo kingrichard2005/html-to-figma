@@ -35,3 +35,27 @@ const rootNode = figma.currentPage;
 
 await addLayersToFrame(layersMeta, rootNode);
 ```
+
+## Development / Demo
+
+You can run a headless demo that extracts a DOM subtree as JSON and a simple SVG suitable for importing into Figma.
+
+Build the test bundle (creates `dist/`):
+
+```bash
+npm run build:tests
+```
+
+Run the demo against the built `dist/` and extract the element matching `#container`:
+
+```bash
+node ./bin/demo.js --selector '#container' --out out/demo.json
+```
+
+This writes two files:
+
+- `out/demo.json` — simplified Layer JSON describing the subtree
+- `out/demo.svg` — a basic SVG rendering of the JSON (rects and text)
+
+You can open the SVG in Figma or import the JSON via the plugin. The demo uses a lightweight fallback converter if the built library isn't exposed on the page; for best results ensure `dist/index.js` is built and exports the real converter.
+

@@ -10,10 +10,12 @@
     "start": "parcel tests/page/index.html",
     "publish:package": "npm run build:package && cd build && npm publish",
     "build:package": "tsc --project tsconfig.json && cpx README.md build/ && cpx package.json build/",
-    "build:tests": "parcel build tests/page/index.ts --no-optimize --dist-dir dist && cpx \"tests/page/stubs/**/*\" dist/stubs",
+    "build:tests": "node -e \"require('fs').mkdirSync('.parcel-cache',{recursive:true})\" && cross-env PARCEL_WORKERS=1 parcel build tests/page/index.ts --no-optimize --dist-dir dist --cache-dir .parcel-cache && cpx \"tests/page/stubs/**/*\" dist/stubs",
     "serve:tests": "serve -s tests/page -p 3000",
+    "demo": "node ./bin/demo.js",
     "test": "cross-env NO_UPDATE_NOTIFIER=1 npm run build:tests && jest tests --runInBand"
   },
+  "type": "module",
   "author": "Sergei Savelev",
   "license": "MIT",
   "devDependencies": {
@@ -31,7 +33,7 @@
     "mkdirp": "^3.0.1",
     "parcel": "^2.16.3",
     "postcss": "^8.3.2",
-    "puppeteer": "^19.11.1",
+    "puppeteer": "^22.0.0",
     "react-docgen-typescript": "^1.22.0",
     "serve": "^14.2.5",
     "ts-jest": "^29.1.0",
@@ -46,6 +48,9 @@
   },
   "dependencies": {
     "file-type": "^12.2.0"
+  },
+  "bin": {
+    "html-to-figma-demo": "bin/demo.js"
   },
   "jest": {
     "globalSetup": "./tests/setup.js",

@@ -5,3 +5,5 @@
 /dev-plugin/node_modules/
 .cache
 .parcel-cache
+ /out/
+dist/stubs

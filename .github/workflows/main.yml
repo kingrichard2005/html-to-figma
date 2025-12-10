@@ -2,19 +2,54 @@ name: Tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js v12.13.1
-        uses: actions/setup-node@v2
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v4
         with:
-          node-version: v12.13.1
-      - run: npm ci
-      - run: npm test
+          node-version: '18.x'
+
+      - name: Show Node/npm versions
+        run: |
+          node -v
+          npm -v
+
+      - name: Install deps (ignore lifecycle scripts)
+        run: |
+          echo "ignore-scripts=true" > .npmrc
+          cat .npmrc
+          npm ci --ignore-scripts
+
+      - name: Run Puppeteer postinstall (explicit ESM invocation)
+        run: |
+          if [ -f node_modules/puppeteer/install.mjs ]; then
+            echo "Running Puppeteer install.mjs with explicit ESM flag"
+            node --input-type=module node_modules/puppeteer/install.mjs || (echo "puppeteer install failed"; exit 1)
+          else
+            echo "No puppeteer install.mjs found"
+          fi
+
+      - name: Run tests
+        run: npm test
+
+      - name: Debug on failure
+        if: failure()
+        run: |
+          echo "=== node/npm versions ==="
+          node -v || true
+          npm -v || true
+          echo "=== npm ls puppeteer ==="
+          npm ls puppeteer --json || true
+          echo "=== puppeteer package.json path ==="
+          node -e "try{console.log(require.resolve('puppeteer/package.json'))}catch(e){console.error(e.message)}" || true
+          echo "=== contents of node_modules/puppeteer ==="
+          ls -la node_modules/puppeteer || true

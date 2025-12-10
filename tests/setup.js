@@ -1,15 +1,13 @@
-const { setup: setupDevServer } = require('jest-dev-server');
+import { setup as setupDevServer } from 'jest-dev-server';
 // Import the setup helper from jest-environment-puppeteer to initialize browsers
-const setupPuppeteer = require('jest-environment-puppeteer/setup');
-const chalk = require('chalk');
-const puppeteer = require('puppeteer');
-const fs = require('fs');
-const mkdirp = require('mkdirp');
-const os = require('os');
-const path = require('path');
+import setupPuppeteer from 'jest-environment-puppeteer/setup';
+import chalk from 'chalk';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 const DIR = path.join(os.tmpdir(), 'jest_puppeteer_global_setup');
-const http = require('http');
+import http from 'http';
 
 function createStaticServer(rootDir, port = 3000) {
     const server = http.createServer((req, res) => {
@@ -51,7 +49,7 @@ function createStaticServer(rootDir, port = 3000) {
     });
 }
 
-module.exports = async function (globalConfig) {
+export default async function (globalConfig) {
     // Start an in-process static server serving dist/ on port 3000
     const root = path.join(process.cwd(), 'dist');
     // ensure dist exists

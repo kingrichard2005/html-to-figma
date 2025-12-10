@@ -1,6 +1,6 @@
-const teardownPuppeteer = require('jest-environment-puppeteer/teardown');
+import teardownPuppeteer from 'jest-environment-puppeteer/teardown';
 
-module.exports = async function (globalConfig) {
+export default async function (globalConfig) {
     try {
         if (global.__staticServer) {
             try {

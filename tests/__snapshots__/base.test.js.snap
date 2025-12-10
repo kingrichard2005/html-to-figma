@@ -54,9 +54,9 @@ exports[`Convert to figma button with padding 1`] = `
       "fills": [
         {
           "color": {
-            "b": 0.9372549019607843,
-            "g": 0.9372549019607843,
-            "r": 0.9372549019607843,
+            "b": 0.9411764705882353,
+            "g": 0.9411764705882353,
+            "r": 0.9411764705882353,
           },
           "opacity": 1,
           "type": "SOLID",
@@ -68,9 +68,9 @@ exports[`Convert to figma button with padding 1`] = `
       "strokes": [
         {
           "color": {
-            "b": 0.4627450980392157,
-            "g": 0.4627450980392157,
-            "r": 0.4627450980392157,
+            "b": 0,
+            "g": 0,
+            "r": 0,
           },
           "opacity": 1,
           "type": "SOLID",
@@ -383,7 +383,7 @@ exports[`Convert to figma input and placeholder 1`] = `
               "y": 0,
             },
           ],
-          "clipsContent": false,
+          "clipsContent": true,
           "constraints": {
             "horizontal": "SCALE",
             "vertical": "MIN",
@@ -496,7 +496,7 @@ exports[`Convert to figma input and placeholder 1`] = `
               "y": 0,
             },
           ],
-          "clipsContent": false,
+          "clipsContent": true,
           "constraints": {
             "horizontal": "SCALE",
             "vertical": "MIN",

@@ -90,6 +90,38 @@ export const elementToFigma = (
         opacity: getOpacity(computedStyle),
     } as WithMeta<FrameNode>;
 
+    // Detect simple layout hints (flex / grid)
+    try {
+        const display = computedStyle.display;
+        if (display === 'flex' || display === 'inline-flex') {
+            rectNode.layout = {
+                type: 'flex',
+                direction: computedStyle.flexDirection === 'column' ? 'column' : 'row',
+                align: computedStyle.alignItems || undefined,
+                justify: computedStyle.justifyContent || undefined,
+                gap: parseFloat(computedStyle.gap) || undefined,
+            };
+        } else if (display === 'grid' || display === 'inline-grid') {
+            const gridTemplate = computedStyle.gridTemplateColumns || computedStyle['grid-template-columns'];
+            const gridRows = computedStyle.gridTemplateRows || computedStyle['grid-template-rows'];
+            const gridAreas = computedStyle.gridTemplateAreas || computedStyle['grid-template-areas'];
+            const gap = computedStyle.gap || computedStyle.gridGap || '0px';
+            const autoFlow = computedStyle.gridAutoFlow || computedStyle['grid-auto-flow'];
+            rectNode.layout = {
+                type: 'grid',
+                template: gridTemplate,
+                rows: gridRows,
+                areas: gridAreas,
+                gap: gap,
+                autoFlow: autoFlow,
+            } as any;
+        } else {
+            rectNode.layout = { type: 'none' } as any;
+        }
+    } catch (e) {
+        // ignore
+    }
+
     const zIndex = Number(computedStyle.zIndex);
     if (isFinite(zIndex)) {
         rectNode.zIndex = zIndex;
@@ -235,6 +267,79 @@ export const elementToFigma = (
     }
 
     const result = rectNode;
+
+    // capture padding for layout mapping
+    try {
+        const padTop = parseUnits(computedStyle.paddingTop);
+        const padRight = parseUnits(computedStyle.paddingRight);
+        const padBottom = parseUnits(computedStyle.paddingBottom);
+        const padLeft = parseUnits(computedStyle.paddingLeft);
+        (result as any).paddingTop = padTop ? padTop.value : 0;
+        (result as any).paddingRight = padRight ? padRight.value : 0;
+        (result as any).paddingBottom = padBottom ? padBottom.value : 0;
+        (result as any).paddingLeft = padLeft ? padLeft.value : 0;
+    } catch (e) {
+        // ignore
+    }
+
+    // capture per-child explicit grid placement if present
+    try {
+        const gridCol = (computedStyle as any).gridColumn || (computedStyle as any)['grid-column'];
+        const gridRow = (computedStyle as any).gridRow || (computedStyle as any)['grid-row'];
+        const gridArea = (computedStyle as any).gridArea || (computedStyle as any)['grid-area'];
+
+        function parsePlacement(spec: string | null) {
+            if (!spec) return null;
+            spec = String(spec).trim();
+            if (!spec || spec === 'auto') return null;
+            // patterns: '1 / 3', '1 / span 2', 'span 2', '2'
+            const mStartEnd = spec.match(/^(\d+)\s*\/\s*(\d+)$/);
+            if (mStartEnd) {
+                const startLine = parseInt(mStartEnd[1], 10);
+                const endLine = parseInt(mStartEnd[2], 10);
+                const startIdx = startLine - 1;
+                const endIdxInclusive = endLine - 2;
+                return { start: startIdx, end: endIdxInclusive };
+            }
+            const mStartSpan = spec.match(/^(\d+)\s*\/\s*span\s+(\d+)$/i);
+            if (mStartSpan) {
+                const startLine = parseInt(mStartSpan[1], 10);
+                const span = parseInt(mStartSpan[2], 10);
+                const startIdx = startLine - 1;
+                return { start: startIdx, end: startIdx + span - 1 };
+            }
+            const mSpanOnly = spec.match(/^span\s+(\d+)$/i);
+            if (mSpanOnly) {
+                const span = parseInt(mSpanOnly[1], 10);
+                return { span };
+            }
+            const mSingle = spec.match(/^(\d+)$/);
+            if (mSingle) {
+                const startIdx = parseInt(mSingle[1], 10) - 1;
+                return { start: startIdx, end: startIdx };
+            }
+            return null;
+        }
+
+        const colPlacement = parsePlacement(gridCol as any);
+        if (colPlacement) {
+            if ((colPlacement as any).start !== undefined) (result as any).gridColumnStart = (colPlacement as any).start;
+            if ((colPlacement as any).end !== undefined) (result as any).gridColumnEnd = (colPlacement as any).end;
+            if ((colPlacement as any).span !== undefined) (result as any).gridColumnSpan = (colPlacement as any).span;
+        }
+
+        const rowPlacement = parsePlacement(gridRow as any);
+        if (rowPlacement) {
+            if ((rowPlacement as any).start !== undefined) (result as any).gridRowStart = (rowPlacement as any).start;
+            if ((rowPlacement as any).end !== undefined) (result as any).gridRowEnd = (rowPlacement as any).end;
+            if ((rowPlacement as any).span !== undefined) (result as any).gridRowSpan = (rowPlacement as any).span;
+        }
+        if (gridArea) {
+            (result as any).gridArea = String(gridArea).trim();
+        }
+    } catch (e) {
+        // ignore
+    }
 
     if (!pseudo && getComputedStyle(el, 'before').content !== 'none') {
         result.before = elementToFigma(el, 'before') as WithMeta<FrameNode>;
