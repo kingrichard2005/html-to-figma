@@ -72,7 +72,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-modules
-          path: .
+          path: node_modules
 
       - name: Download Puppeteer cache
         uses: actions/download-artifact@v4
@@ -125,7 +125,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-modules
-          path: .
+          path: node_modules
 
       - name: Download Puppeteer cache
         uses: actions/download-artifact@v4
