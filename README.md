@@ -1,5 +1,7 @@
 # html-figma
 
+[![CI](https://github.com/kingrichard2005/html-to-figma/actions/workflows/ci.yml/badge.svg)](https://github.com/kingrichard2005/html-to-figma/actions/workflows/ci.yml)
+
 **WORK IN PROGRESS**
 
 ![](https://s3-alpha-sig.figma.com/plugins/1005496056687344906/20022/399cc0cb-16e8-404b-b546-414cada784c8-cover?Expires=1630886400&Signature=Nbz0-5O19TeWqidtT42D9wSso8wXEqrhkY8oQ9cBE9aehp4plxzeEXTuHXlBEOi6~85psa1Fr~t6ofvgT1T2QzZLnqaCm6DOjHqdOtG05qXaniN8ptD0zNPWvzCWvEaTLcJvbEZ3hufcITGEOiO~kDg94r~zXKxDkOrKhnFS4YyBfIwd-wm54oHipTvbjhVqnSZwDUGk6ycFuv13ZWD5qAe8-p8qnkWZtu5K~bluHDMPPsD8iKzYoYYjJEBOU4M3NvP~gtNltqJxFTk8bvI3AUtsDKgdyvJY7aJwb1SGEqGq9B1MYxB0EKsIXg6cjgeeyHYgJJVpTWYheHB92b3Hgw__&Key-Pair-Id=APKAINTVSUGEWH5XD5UA)
@@ -33,3 +35,46 @@ const rootNode = figma.currentPage;
 
 await addLayersToFrame(layersMeta, rootNode);
 ```
+
+## Development / Demo
+
+You can run a headless demo that extracts a DOM subtree as JSON and a simple SVG suitable for importing into Figma.
+
+Build the test bundle (creates `dist/`):
+
+```bash
+npm run build:tests
+```
+
+Run the demo against the built `dist/` and extract the element matching `#container`:
+
+```bash
+node ./bin/demo.js --selector '#container' --out out/demo.json
+```
+
+This writes two files:
+
+- `out/demo.json` — simplified Layer JSON describing the subtree
+- `out/demo.svg` — a basic SVG rendering of the JSON (rects and text)
+
+You can open the SVG in Figma or import the JSON via the plugin. The demo uses a lightweight fallback converter if the built library isn't exposed on the page; for best results ensure `dist/index.js` is built and exports the real converter.
+
+## Color Determinism & Snapshots
+
+Automated tests render DOM styles in a headless Chromium environment and serialize colors as normalized RGB values. Small differences in how Chromium or the platform compute color channels (for example 239/255 vs 240/255) can cause snapshot tests to fail intermittently.
+
+To avoid flaky snapshots the project applies a conservative color "snapping" step in `getRgb()` which:
+
+- Quantizes parsed color channels to integer values.
+- When channels are effectively identical (a neutral gray), maps them to a small set of canonical gray values to keep outputs stable across environments.
+
+If you change color handling or intentionally update visual output and need to refresh snapshots, run the tests locally and update snapshots with:
+
+```bash
+npx jest tests -u
+```
+
+Commit updated snapshots together with the code changes. Prefer adjusting the deterministic mapping in `src/utils.ts` if you see environment-dependent small shifts — that keeps CI stable without frequently updating snapshots.
+
+If you suspect snapshots are failing due to headless Chromium flags or environment, try running tests locally with the same Chromium flags used by CI (see `jest-puppeteer.config.cjs`) or run the `bin/demo.js` CLI to reproduce the output locally before updating snapshots.
+

@@ -1,0 +1,28 @@
+{
+  "type": "FRAME",
+  "name": "div",
+  "x": 8,
+  "y": 8,
+  "width": 784,
+  "height": 39,
+  "background": "rgba(0, 0, 0, 0)",
+  "children": [
+    {
+      "type": "FRAME",
+      "name": "button",
+      "x": 8,
+      "y": 8,
+      "width": 58,
+      "height": 39,
+      "background": "rgb(240, 240, 240)",
+      "children": [
+        {
+          "type": "TEXT",
+          "text": "TEST",
+          "x": 8,
+          "y": 8
+        }
+      ]
+    }
+  ]
+}

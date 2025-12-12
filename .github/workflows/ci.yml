@@ -1,0 +1,150 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch or tag to run (e.g. main)'
+        required: true
+        default: 'main'
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+
+      - name: Install npm deps (ignore lifecycle scripts)
+        run: |
+          npm ci --ignore-scripts
+
+      - name: Run Puppeteer installer (explicit .mjs invocation)
+        run: |
+          if [ -f node_modules/puppeteer/install.mjs ]; then
+            node node_modules/puppeteer/install.mjs || (echo "puppeteer install failed"; exit 1)
+          else
+            echo "No puppeteer install.mjs found"
+          fi
+
+      - name: Archive Puppeteer cache
+        run: |
+          if [ -d "$HOME/.cache/puppeteer" ]; then
+            tar -czf puppeteer-cache.tgz -C "$HOME" .cache/puppeteer
+          else
+            echo "No puppeteer cache to upload"
+          fi
+
+      - name: Upload Puppeteer cache
+        uses: actions/upload-artifact@v4
+        with:
+          name: puppeteer-cache
+          path: puppeteer-cache.tgz
+
+      - name: Upload node_modules
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-modules
+          path: node_modules
+
+  build:
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+
+      - name: Download node_modules
+        uses: actions/download-artifact@v4
+        with:
+          name: node-modules
+          path: node_modules
+
+      - name: Download Puppeteer cache
+        uses: actions/download-artifact@v4
+        with:
+          name: puppeteer-cache
+          path: .
+
+      - name: Restore Puppeteer cache
+        run: |
+          if [ -f puppeteer-cache.tgz ]; then
+            mkdir -p "$HOME/.cache"
+            tar -xzf puppeteer-cache.tgz -C "$HOME"
+          else
+            echo "No puppeteer cache downloaded"
+          fi
+
+      - name: Ensure node binaries
+        run: |
+          echo "Restoring missing .bin entries and dev deps"
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true npm ci --ignore-scripts
+
+      - name: Build tests bundle
+        run: npm run build:tests
+
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Download node_modules
+        uses: actions/download-artifact@v4
+        with:
+          name: node-modules
+          path: node_modules
+
+      - name: Download Puppeteer cache
+        uses: actions/download-artifact@v4
+        with:
+          name: puppeteer-cache
+          path: .
+
+      - name: Restore Puppeteer cache
+        run: |
+          if [ -f puppeteer-cache.tgz ]; then
+            mkdir -p "$HOME/.cache"
+            tar -xzf puppeteer-cache.tgz -C "$HOME"
+          else
+            echo "No puppeteer cache downloaded"
+          fi
+
+      - name: Ensure node binaries
+        run: |
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true npm ci --ignore-scripts
+
+      - name: Run tests
+        run: npx jest tests --runInBand

@@ -132,6 +132,10 @@ export const textToFigma = (node: Element, { fromTextInput = false } = {}) => {
         textNode.fontFamily = computedStyles.fontFamily;
     }
 
+    // Approximate baseline (useful for layout mapping)
+    const size = textNode.fontSize || 14;
+    textNode.baseline = Math.round(textNode.y + size * 0.8);
+
     if (computedStyles.textDecoration) {
         if (
             computedStyles.textDecoration === 'underline' ||

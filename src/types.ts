@@ -52,4 +52,12 @@ export type WithMeta<T> = Partial<Omit<T, 'children'>> & {
     children?: WithMeta<T>[];
     constraints?: FrameNode['constraints'];
     clipsContent?: FrameNode['clipsContent'];
+    layout?: {
+        type?: 'flex' | 'grid' | 'none';
+        direction?: 'row' | 'column';
+        align?: string;
+        justify?: string;
+        gap?: number;
+    };
+    baseline?: number;
 }
