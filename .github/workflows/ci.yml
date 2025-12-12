@@ -92,5 +92,15 @@ jobs:
           name: dist
           path: dist
 
+      - name: Download node_modules
+        uses: actions/download-artifact@v4
+        with:
+          name: node-modules
+          path: .
+
+      - name: Ensure node binaries
+        run: |
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true npm ci --ignore-scripts
+
       - name: Run tests
         run: npx jest --runInBand
