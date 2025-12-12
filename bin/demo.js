@@ -52,7 +52,35 @@ function startStatic(dir, port = 0) {
     const distDir = path.join(process.cwd(), 'dist');
     if (!fs.existsSync(distDir)) { console.error('dist/ not found, run npm run build:tests first'); process.exit(1); }
     const srv = await startStatic(distDir, 0);
-    server = srv.server; pageUrl = `http://localhost:${srv.port}/index.html`;
+    server = srv.server;
+
+    // Prefer index.html, but if it's not present use the first HTML under dist/stubs/*
+    const indexPath = path.join(distDir, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      pageUrl = `http://localhost:${srv.port}/index.html`;
+    } else {
+      // find first HTML file under dist/stubs
+      const stubsDir = path.join(distDir, 'stubs');
+      let found = null;
+      if (fs.existsSync(stubsDir)) {
+        const walk = (dir) => {
+          for (const f of fs.readdirSync(dir)) {
+            const fp = path.join(dir, f);
+            const stat = fs.statSync(fp);
+            if (stat.isDirectory()) {
+              const res = walk(fp);
+              if (res) return res;
+            } else if (f.toLowerCase().endsWith('.html')) {
+              return path.relative(distDir, fp).replace(/\\/g, '/');
+            }
+          }
+          return null;
+        };
+        found = walk(stubsDir);
+      }
+      if (found) pageUrl = `http://localhost:${srv.port}/${found}`;
+      else { console.error('no index.html or stubs found in dist/ — run npm run build:tests'); process.exit(1); }
+    }
   }
 
   const launchArgs = ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'];
@@ -67,8 +95,18 @@ function startStatic(dir, port = 0) {
   }
 
   const layer = await page.evaluate(async (sel) => {
-    if (!window.htmlToFigma || !window.htmlToFigma.convert) throw new Error('htmlToFigma.convert not available on page');
-    return await window.htmlToFigma.convert(sel, { snapshot: true });
+    // Support both the exported helper used in tests (`window.__htmlToFigma = htmlToFigma`)
+    // and the runtime helper (`window.htmlToFigma.convert`). Handle both function
+    // exports and object-with-convert signatures.
+    const api = window.htmlToFigma || window.__htmlToFigma;
+    if (!api) throw new Error('htmlToFigma.convert not available on page');
+    if (typeof api === 'function') {
+      return await api(sel);
+    }
+    if (api && typeof api.convert === 'function') {
+      return await api.convert(sel, { snapshot: true });
+    }
+    throw new Error('htmlToFigma.convert not available on page');
   }, selector);
 
   await browser.close(); if (server) server.close();
