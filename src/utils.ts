@@ -78,10 +78,17 @@ export function getRgb(colorString?: string | null): ParsedColor | null {
     const none = a && parseFloat(a) === 0;
 
     if (r && g && b && !none) {
+        // Parse potentially fractional channel values, quantize to nearest 8-bit
+        // integer and convert back to normalized channel in [0,1]. This keeps
+        // outputs consistent across different renderers and prevents tiny
+        // floating-point differences from causing snapshot churn.
+        const rInt = Math.round(parseFloat(r));
+        const gInt = Math.round(parseFloat(g));
+        const bInt = Math.round(parseFloat(b));
         return {
-            r: parseInt(r) / 255,
-            g: parseInt(g) / 255,
-            b: parseInt(b) / 255,
+            r: rInt / 255,
+            g: gInt / 255,
+            b: bInt / 255,
             a: a ? parseFloat(a) : 1,
         };
     }
