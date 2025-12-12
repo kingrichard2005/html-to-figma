@@ -96,9 +96,9 @@ export function getRgb(colorString?: string | null): ParsedColor | null {
         let finalG = gInt;
         let finalB = bInt;
 
-        if (maxCh - minCh <= 2) {
+        if (maxCh - minCh <= 3) {
             const avg = Math.round((rInt + gInt + bInt) / 3);
-            const canonical = [178, 204, 238, 240];
+            const canonical = [178, 204, 238, 239, 240];
             // find nearest canonical
             let best = avg;
             let bestDist = Infinity;
@@ -106,8 +106,8 @@ export function getRgb(colorString?: string | null): ParsedColor | null {
                 const d = Math.abs(c - avg);
                 if (d < bestDist) { bestDist = d; best = c; }
             }
-            // snap only when very close
-            if (bestDist <= 2) {
+            // snap only when very close (allow small +/-3 differences)
+            if (bestDist <= 3) {
                 finalR = finalG = finalB = best;
             }
         }
