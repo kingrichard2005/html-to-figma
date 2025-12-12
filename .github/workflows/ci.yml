@@ -147,4 +147,4 @@ jobs:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true npm ci --ignore-scripts
 
       - name: Run tests
-        run: npx jest --runInBand
+        run: npx jest tests --runInBand
