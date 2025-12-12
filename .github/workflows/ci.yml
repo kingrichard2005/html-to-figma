@@ -36,6 +36,20 @@ jobs:
             echo "No puppeteer install.mjs found"
           fi
 
+      - name: Archive Puppeteer cache
+        run: |
+          if [ -d "$HOME/.cache/puppeteer" ]; then
+            tar -czf puppeteer-cache.tgz -C "$HOME" .cache/puppeteer
+          else
+            echo "No puppeteer cache to upload"
+          fi
+
+      - name: Upload Puppeteer cache
+        uses: actions/upload-artifact@v4
+        with:
+          name: puppeteer-cache
+          path: puppeteer-cache.tgz
+
       - name: Upload node_modules
         uses: actions/upload-artifact@v4
         with:
@@ -59,6 +73,21 @@ jobs:
         with:
           name: node-modules
           path: .
+
+      - name: Download Puppeteer cache
+        uses: actions/download-artifact@v4
+        with:
+          name: puppeteer-cache
+          path: .
+
+      - name: Restore Puppeteer cache
+        run: |
+          if [ -f puppeteer-cache.tgz ]; then
+            mkdir -p "$HOME/.cache"
+            tar -xzf puppeteer-cache.tgz -C "$HOME"
+          else
+            echo "No puppeteer cache downloaded"
+          fi
 
       - name: Ensure node binaries
         run: |
@@ -97,6 +126,21 @@ jobs:
         with:
           name: node-modules
           path: .
+
+      - name: Download Puppeteer cache
+        uses: actions/download-artifact@v4
+        with:
+          name: puppeteer-cache
+          path: .
+
+      - name: Restore Puppeteer cache
+        run: |
+          if [ -f puppeteer-cache.tgz ]; then
+            mkdir -p "$HOME/.cache"
+            tar -xzf puppeteer-cache.tgz -C "$HOME"
+          else
+            echo "No puppeteer cache downloaded"
+          fi
 
       - name: Ensure node binaries
         run: |
