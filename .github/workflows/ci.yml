@@ -60,6 +60,11 @@ jobs:
           name: node-modules
           path: .
 
+      - name: Ensure node binaries
+        run: |
+          echo "Restoring missing .bin entries and dev deps"
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true npm ci --ignore-scripts
+
       - name: Build tests bundle
         run: npm run build:tests
 
