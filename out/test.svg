@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="784" height="39" viewBox="0 0 784 39">
+<g transform="translate(8,8)" opacity="1" data-name="div">
+<rect x="0" y="0" width="784" height="39" fill="rgba(0, 0, 0, 0)" opacity="1" />
+<g transform="translate(8,8)" opacity="1" data-name="button">
+<rect x="0" y="0" width="58" height="39" fill="rgb(240, 240, 240)" opacity="1" />
+<text x="8" y="22" fill="#000" font-size="14" opacity="1" style="font-family: sans-serif;"></text>
+</g>
+</g>
+</svg>
